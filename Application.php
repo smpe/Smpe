@@ -14,6 +14,11 @@ class Smpe_Application
     public static $time = '';
 
     /**
+     * @var float
+     */
+    public static $requestTime;
+
+    /**
      * @var int
      */
     public static $timestamp = 0;
@@ -22,6 +27,11 @@ class Smpe_Application
      * @var string
      */
     public static $workingDir = '';
+
+    /**
+     * @var string
+     */
+    public static $uri = '';
 
     /**
      * @var string
@@ -65,8 +75,8 @@ class Smpe_Application
         self::result($r);
 
         if(Config::$environment < 2) {
-            $t = number_format(microtime(true)-$_SERVER['REQUEST_TIME_FLOAT'], 4, '.', '');
-            self::log(sprintf("%s: Consuming time %ss (%s)\n", self::$time, $t, $_SERVER['REQUEST_URI']));
+            $t = number_format(microtime(true)-self::$requestTime, 4, '.', '');
+            self::log(sprintf("%s: Consuming time %ss (%s)\n", self::$time, $t, self::$uri));
         }
     }
 
@@ -110,19 +120,24 @@ class Smpe_Application
      */
     private static function initWorkingDir($p) {
         self::$workingDir = $p;
+        self::$requestTime = microtime(true);
         self::$time = date('Y-m-d H:i:s');
         self::$timestamp = time();
+        self::$uri = Smpe_InputFilter::string('REQUEST_URI', INPUT_SERVER);
     }
 
     /**
      * Domain
      */
     private static function initDomain() {
-        self::$request['protocol'] = $_SERVER['SERVER_PORT'] == '443' ? 'https' : 'http';
-        self::$request['host'] = $_SERVER['HTTP_HOST'];
-        self::$request['domain'] = strstr($_SERVER['HTTP_HOST'], '.');
+        $port = Smpe_InputFilter::string('SERVER_PORT', INPUT_SERVER);
+        $host = Smpe_InputFilter::string('HTTP_HOST', INPUT_SERVER);
+
+        self::$request['protocol'] = $port == '443' ? 'https' : 'http';
+        self::$request['host'] = $host;
+        self::$request['domain'] = strstr($host, '.');
         if(empty(self::$request['domain'])) {
-            self::$request['domain'] = $_SERVER['HTTP_HOST'];
+            self::$request['domain'] = $host;
         }
     }
 
@@ -153,7 +168,7 @@ class Smpe_Application
      * language
      */
     private static function initLanguage() {
-        $s = Smpe_InputFilter::string('HTTP_ACCEPT_LANGUAGE');
+        $s = Smpe_InputFilter::string('HTTP_ACCEPT_LANGUAGE', INPUT_SERVER);
         if(is_null($s) || $s === false) {
             return;
         }
@@ -215,10 +230,10 @@ class Smpe_Application
     private static function initArgs() {
         //vDir
         if(Config::$isRewrite){
-            $path = parse_url(Smpe_InputFilter::string('REQUEST_URI', INPUT_SERVER), PHP_URL_PATH);
+            $path = parse_url(self::$uri, PHP_URL_PATH);
             $path = substr($path, strlen(config::$vDir));
         } else {
-            config::$vDir = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            config::$vDir = parse_url(self::$uri, PHP_URL_PATH);
             $path = Smpe_InputFilter::string('p', INPUT_GET);
         }
         
@@ -301,7 +316,8 @@ class Smpe_Application
             $r = array('data'=>$r, 'msg'=>'');
         }
 
-        if($_SERVER["REQUEST_METHOD"] == 'POST') {
+        $method = Smpe_InputFilter::string('REQUEST_METHOD', INPUT_SERVER);
+        if($method == 'POST') {
             self::$action->json($r);
         } else { //GET
             self::$action->error($r['msg'], $r['data']);
