@@ -57,6 +57,7 @@ class Smpe_Application
      * @param string $configPath
      */
     public static function init($workingDir, $configPath = '') {
+        require $workingDir . '/library/Smpe/InputFilter.php';
         try {
             self::initWorkingDir($workingDir);
             self::initDomain();
@@ -173,7 +174,19 @@ class Smpe_Application
             return;
         }
 
-        self::$lang['name'] = locale_accept_from_http($s);
+        $preferred = "en"; // default language
+        $max = 0.0;
+        $langs = explode(',', $s);
+        foreach($langs as $lang) {
+            $lang = explode(';', $lang);
+            $q = isset($lang[1]) ? (float)$lang[1] : 1.0;
+            if ($q > $max) {
+                $max = $q;
+                $preferred = trim($lang[0]);
+            }
+        }
+
+        self::$lang['name'] = $preferred; //locale_accept_from_http($s);
         self::$lang['code'] = str_replace('-', '_', self::$lang['name']);
     }
 
