@@ -31,7 +31,7 @@ class Smpe_DbMysql implements Smpe_DbInterface
                 //PDO::ATTR_EMULATE_PREPARES => 1
                 self::$db[$dataIndex] = new PDO($dsn, $db['user'], $db['password'], $options);
                 self::$db[$dataIndex]->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                if($db['profiling']){ //profiling
+                if(!empty($db['profiling'])){ //profiling
                     self::$db[$dataIndex]->exec("SET profiling = 1");
                 }
             } catch (PDOException $e) {
