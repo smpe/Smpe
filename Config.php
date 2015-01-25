@@ -36,11 +36,6 @@ class Smpe_Config
 	public static $dsn = array();
 
 	/**
-	 * @var string Default module
-	 */
-	public static $defaultModule = '';
-
-	/**
 	 * @var bool Whether to enable multi-language
 	 */
 	public static $enableI18in = false;

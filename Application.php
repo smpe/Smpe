@@ -210,7 +210,7 @@ class Smpe_Application
 
         //module
         if(empty(self::$request['args'][0]) || self::$request['args'][0] == 'index.php'){
-            self::$request['module'] = Config::$defaultModule;
+            self::$request['module'] = '';
         } else {
             self::$request['module'] = array_shift(self::$request['args']);
         }
@@ -278,7 +278,11 @@ class Smpe_Application
      * @throws Exception
      */
     private static function initAction() {
-        $className = sprintf("%s_%sController", self::$request['module'], self::$request['controller']);
+        if(self::$request['module'] == '') {
+            $className = sprintf("%sController", self::$request['controller']);
+        } else {
+            $className = sprintf("%s_%sController", self::$request['module'], self::$request['controller']);
+        }
         if(!class_exists($className)){
             throw new Exception(Smpe_I18in::smpe('Class not exists: ', $className));
         }
