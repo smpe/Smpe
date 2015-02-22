@@ -3,30 +3,23 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-mb_internal_encoding('utf-8');
 header("Content-type: text/html; charset=UTF-8");
-
-class Smpe_Application
+class Smpe_Application extends Smpe_Bootstrap
 {
-    /**
-     * @var string
-     */
-    public static $time = '';
-
     /**
      * @var float
      */
     public static $requestTime;
 
     /**
+     * @var string
+     */
+    public static $time = '';
+
+    /**
      * @var int
      */
     public static $timestamp = 0;
-
-    /**
-     * @var string
-     */
-    public static $workingDir = '';
 
     /**
      * @var string
@@ -57,11 +50,10 @@ class Smpe_Application
      * @param string $configPath
      */
     public static function init($workingDir, $configPath = '') {
-        require $workingDir . '/library/Smpe/InputFilter.php';
         try {
             self::initWorkingDir($workingDir);
-            self::initDomain();
             self::initAutoload();
+            self::initDomain();
             self::initConfig($configPath);
             self::initLanguage();
             self::initLog();
@@ -79,16 +71,6 @@ class Smpe_Application
             $t = number_format(microtime(true)-self::$requestTime, 4, '.', '');
             self::log(sprintf("%s: Consuming time %ss (%s)\n", self::$time, $t, self::$uri));
         }
-    }
-
-    /**
-     * @param $message
-     * @param string $scope
-     * @param array $options
-     * @return int
-     */
-    public static function log($message, $scope = 'smpe', $options = array()) {
-        return file_put_contents(self::$workingDir.'/data/log/'.$scope.'.log', $message, FILE_APPEND|LOCK_EX);
     }
 
     /**
@@ -119,18 +101,19 @@ class Smpe_Application
      * Working directory
      * @param $p
      */
-    private static function initWorkingDir($p) {
-        self::$workingDir = $p;
+    protected static function initWorkingDir($p) {
+        parent::initWorkingDir($p);
         self::$requestTime = microtime(true);
         self::$time = date('Y-m-d H:i:s');
         self::$timestamp = time();
-        self::$uri = Smpe_InputFilter::string('REQUEST_URI', INPUT_SERVER);
     }
 
     /**
      * Domain
      */
     private static function initDomain() {
+        self::$uri = Smpe_InputFilter::string('REQUEST_URI', INPUT_SERVER);
+
         $port = Smpe_InputFilter::string('SERVER_PORT', INPUT_SERVER);
         $host = Smpe_InputFilter::string('HTTP_HOST', INPUT_SERVER);
 
@@ -140,13 +123,6 @@ class Smpe_Application
         if(empty(self::$request['domain'])) {
             self::$request['domain'] = $host;
         }
-    }
-
-    /**
-     * Autoload class
-     */
-    private static function initAutoload() {
-        spl_autoload_register('Smpe_Application::autoload');
     }
 
     /**
@@ -298,21 +274,6 @@ class Smpe_Application
 
         // If init() is ok, start the action.
         return call_user_func_array(array(self::$action, self::$request['action']), self::$request['args']);
-    }
-
-    /**
-     * Autoload
-     * @param $className
-     */
-    private static function autoload($className) {
-        $path = str_replace(array('_', '\\'), array('/', '/'), $className);
-        $path = sprintf('%s/library/%s.php', self::$workingDir, $path);
-        
-        if(is_file($path)) {
-            require $path;
-        } else {
-            self::log(Smpe_I18in::smpe('File not exists: ', $path."\n"));
-        }
     }
 
     /**
