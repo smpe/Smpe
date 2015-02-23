@@ -4,6 +4,7 @@
 // license that can be found in the LICENSE file.
 
 header("Content-type: text/html; charset=UTF-8");
+
 class Smpe_Application extends Smpe_Bootstrap
 {
     /**
@@ -182,7 +183,8 @@ class Smpe_Application extends Smpe_Bootstrap
      * Request
      */
     private static function initRequest() {
-        self::initArgs();
+        $f = 'initArgs'.Config::$fun;
+        self::$f();
 
         //module
         if(empty(self::$request['args'][0]) || self::$request['args'][0] == 'index.php'){
@@ -217,18 +219,30 @@ class Smpe_Application extends Smpe_Bootstrap
      * Arguments
      */
     private static function initArgs() {
-        //vDir
-        if(Config::$isRewrite){
-            $path = parse_url(self::$uri, PHP_URL_PATH);
-            $path = substr($path, strlen(config::$vDir));
-        } else {
-            config::$vDir = parse_url(self::$uri, PHP_URL_PATH);
-            $path = Smpe_InputFilter::string('p', INPUT_GET);
-        }
+        config::$listen = parse_url(self::$uri, PHP_URL_HOST);
+        config::$vDir = parse_url(self::$uri, PHP_URL_PATH);
+
+        $path = Smpe_InputFilter::string('p', INPUT_GET);
         
         //args
         self::$request['args'] = explode('/', $path);
         
+        //Remove "/" and "" at begin.
+        if(empty(self::$request['args'][0]) || self::$request['args'][0] == '/') {
+            array_shift(self::$request['args']);
+        }
+    }
+
+    /**
+     * Arguments
+     */
+    private static function initArgsAdv() {
+        $path = parse_url(self::$uri, PHP_URL_PATH);
+        $path = substr($path, strlen(config::$vDir));
+
+        //args
+        self::$request['args'] = explode('/', $path);
+
         //Remove "/" and "" at begin.
         if(empty(self::$request['args'][0]) || self::$request['args'][0] == '/') {
             array_shift(self::$request['args']);

@@ -12,24 +12,13 @@ class Smpe_UnitTest extends Smpe_Bootstrap
 
     /**
      * @param $workingDir
-     * @param $args
      * @param string $configPath
      */
-    public static function init($workingDir, $args, $configPath = '') {
+    public static function init($workingDir, $configPath = '') {
         self::initWorkingDir($workingDir);
         self::initAutoload();
-        array_shift($args);
-        self::$args = $args;
-
-        var_dump(self::$args);
-
-        if(count(self::$args) == 2){ // suite
-            self::runSuite();
-        } else if(count(self::$args) == 3) { // singe
-            self::runSinge();
-        } else { //error
-
-        }
+        self::initArgs();
+        self::run();
     }
 
     /**
@@ -40,6 +29,34 @@ class Smpe_UnitTest extends Smpe_Bootstrap
         parent::initWorkingDir($p);
     }
 
+    /**
+     * Arguments
+     */
+    private static function initArgs() {
+        self::$args = getopt('t:m:s::');
+        if(!in_array(count(self::$args), array(2, 3))){
+            echo "Error: \$argv empty.\r\n";
+            echo "Example: php test.php -tcontroller -mSupport -sabc\r\n";
+            exit();
+        }
+    }
+
+    /**
+     *
+     */
+    private static function run() {
+        if(count(self::$args) == 2){ // suite
+            self::runSuite();
+        } else if(count(self::$args) == 3) { // singe
+            self::runSinge();
+        } else { //error
+
+        }
+    }
+
+    /**
+     * @param string $dir
+     */
     private static function runSuite($dir = '') {
         $path = self::$workingDir . '/test' . $dir;
 
@@ -101,6 +118,9 @@ class Smpe_UnitTest extends Smpe_Bootstrap
         }
     }
 
+    /**
+     * @return array
+     */
     private static function runSinge() {
         //mtest 0 monle/htmlTest testDemo
         $object = isset($argv[1]) ? $argv[1] : 'none'; // PHPUnit/Framework/AssertTest

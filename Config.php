@@ -16,12 +16,17 @@ class Smpe_Config
 	public static $environment = 0;
 
 	/**
-	 * @var bool url rewrite.
+	 * @var string empty or 'Adv'
 	 */
-	public static $isRewrite = false;
+	public static $fun = '';
+
+    /**
+     * @var string
+     */
+    public static $listen = '';
 
 	/**
-	 * @var string Virtual directory. $isRewrite only.
+	 * @var string Virtual directory. $fun = 'Adv' only.
 	 */
 	public static $vDir = '';
 

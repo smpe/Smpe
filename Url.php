@@ -6,17 +6,31 @@
 class Smpe_Url
 {
     /**
+     * @param $module
+     * @param string $controller
+     * @param string $action
+     * @param array $args
+     * @param array $query
+     * @param string $anchor
      * @return string
      */
-    public static function http() {
-        return self::fullUrl('http', func_get_args());
+    public static function http($module = '', $controller = '', $action = '', $args = array(), $query = array(), $anchor = '') {
+        $f = 'fullUrl'.Config::$fun;
+        return self::$f('http', $module, $controller, $action, $args, $query, $anchor);
     }
 
     /**
+     * @param $module
+     * @param string $controller
+     * @param string $action
+     * @param array $args
+     * @param array $query
+     * @param string $anchor
      * @return string
      */
-    public static function https() {
-        return self::fullUrl('https', func_get_args());
+    public static function https($module = '', $controller = '', $action = '', $args = array(), $query = array(), $anchor = '') {
+        $f = 'fullUrl'.Config::$fun;
+        return self::$f('http', $module, $controller, $action, $args, $query, $anchor);
     }
 
     /**
@@ -37,31 +51,73 @@ class Smpe_Url
 
     /**
      * @param $schema
-     * @param $args
+     * @param string $module
+     * @param string $controller
+     * @param string $action
+     * @param array $args
+     * @param array $query
+     * @param string $anchor
      * @return string
      */
-    private static function fullUrl($schema, $args) {
-        if(Config::$isRewrite) {
-            return self::fullUrlRwrite($schema, $args);
-        }
-
-        if(empty($args)) {
+    private static function fullUrl($schema, $module = '', $controller = '', $action = '', $args = array(), $query = array(), $anchor = '') {
+        if(empty($module)){
             return Config::$vDir;
         }
 
-        $module = array_shift($args);
-        return sprintf('%s?p=/%s/%s', Config::$vDir, $module, implode('/', $args));
+        $p = '/'.$module;
+
+        if(!empty($controller)){
+            $p .= '/'.$controller;
+        }
+        if(!empty($action)){
+            $p .= '/'.$action;
+        }
+        if(!empty($args)){
+            $p .= '/'.implode('/', $args);
+        }
+        if(!empty($query)){
+            $p .= '&'.http_build_query($query);
+        }
+        if(!empty($anchor)){
+            $p .= '#'.$anchor;
+        }
+
+        return sprintf('%s?p=%s', Config::$vDir, $p);
     }
 
     /**
      * @param $schema
-     * @param $args
+     * @param string $module
+     * @param string $controller
+     * @param string $action
+     * @param array $args
+     * @param array $query
+     * @param string $anchor
      * @return string
      */
-    private static function fullUrlRwrite($schema, $args) {
-        $module = empty($args) ? Config::$defaultModule : array_shift($args);
-        $domain = Config::$modules[$module]['listen'];
-        $url = sprintf("%s://%s%s", $schema, $domain, Config::$vDir);
-        return sprintf('%s%s/%s', $url, $module, implode('/', $args));
+    private static function fullUrlAdv($schema, $module = '', $controller = '', $action = '', $args = array(), $query = array(), $anchor = '') {
+        if(empty($module)){
+            return sprintf("%s://%s/%s", $schema, Config::$listen, Config::$vDir);
+        }
+
+        $p = '/'.$module;
+
+        if(!empty($controller)){
+            $p .= '/'.$controller;
+        }
+        if(!empty($action)){
+            $p .= '/'.$action;
+        }
+        if(!empty($args)){
+            $p .= '/'.implode('/', $args);
+        }
+        if(!empty($query)){
+            $p .= '?'.http_build_query($query);
+        }
+        if(!empty($anchor)){
+            $p .= '#'.$anchor;
+        }
+
+        return sprintf('%s://%s/%s%s', $schema, Config::$listen, Config::$vDir, $p);
     }
 }
