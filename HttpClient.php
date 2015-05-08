@@ -45,11 +45,11 @@ class HttpClient
      * @param string $type post or get
      * @param $url
      * @param array $headers
-     * @param string $body
+     * @param array $body
      * @return int
      * @throws Exception
      */
-    public function newHandle($type, $url, $headers = array(), $body = ''){
+    public function newHandle($type, $url, $headers = array(), $body = array()){
         if(empty($url)) {
             throw new Exception('URL address cannot be empty.');
         }
@@ -129,10 +129,19 @@ class HttpClient
     /**
      * If CURLOPT_RETURNTRANSFER is an option that is set for a specific handle, then this function
      * will return the content of that cURL handle in the form of a string.
+     * @param string $key
      * @return array
      */
-    public function responses() {
-        return $this->responses;
+    public function responses($key = '') {
+        if(strlen($key) > 0){
+            if(isset($this->responses[$key])){
+                return $this->responses[$key];
+            } else {
+                return array('body'=>'', 'http_code'=>'');
+            }
+        } else {
+            return $this->responses;
+        }
     }
 
     /**
@@ -146,13 +155,14 @@ class HttpClient
     private function addHandle($type, $url, $headers = array(), $body = array()) {
         // create both cURL resources
         $this->chs[] = curl_init();
-        $key = count($this->chs[]) - 1;
+        $key = count($this->chs) - 1;
 
         // set URL and other appropriate options
         curl_setopt($this->chs[$key], CURLOPT_AUTOREFERER, true);
         curl_setopt($this->chs[$key], CURLOPT_URL, $url);
         curl_setopt($this->chs[$key], CURLOPT_FAILONERROR, false);
         curl_setopt($this->chs[$key], CURLOPT_RETURNTRANSFER, true);
+        //curl_setopt($this->chs[$key], CURLOPT_VERBOSE, true);
 
         // https
         if(strtolower(substr($url, 0, 5)) == "https") {
@@ -198,6 +208,7 @@ class HttpClient
 
         $this->responses[$key]['body'] = curl_multi_getcontent($ch);
         $this->responses[$key]['http_code'] = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
         curl_multi_remove_handle($this->mh, $ch);
     }
 }
